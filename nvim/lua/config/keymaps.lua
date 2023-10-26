@@ -2,7 +2,6 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
-
 -- WHICH_KEY
 local wk = require("which-key")
 
@@ -13,24 +12,21 @@ wk.register({
     M = { "<cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", "Method Test [DEBUG]" },
     f = { "<cmd>lua require('neotest').run.run({vim.fn.expand('%')})<cr>", "File Test" },
     F = { "<cmd>lua require('neotest').run.run({vim.fn.expand('%'), strategy = 'dap'})<cr>", "File Test [DEBUG]" },
-    --    t = { "<cmd>: DapToggleBreakpoint<cr>", "Toggle Breakpoint" },
-    t = { "<cmd>lua require('persistent-breakpoints.api').toggle_breakpoint()<cr>", "Toggle Breakpoint",
-      { noremap = true, silent = true } },
+    t = { "<cmd>: DapToggleBreakpoint<cr>", "Toggle Breakpoint" },
     u = { "<cmd>lua require('dapui').toggle()<cr>", "Toggle DAP UI" },
   },
   T = { "<cmd>:ToggleTerm<cr>", "Toggle Terminal" },
   L = { "<cmd>lua require('lsp_lines').toggle()<cr>", "LSP Lines toggle" },
-  O = { "<cmd>:AerialToggle!<cr>", "Toggle code Outline" }
+  O = { "<cmd>:AerialToggle!<cr>", "Toggle code Outline" },
 }, { prefix = "<leader>" })
 
 wk.register({
   g = {
     d = { "<cmd>lua vim.lsp.buf.definition()<CR>", "Go to Definition" },
     h = { "<cmd>lua vim.lsp.buf.hover()<CR>", "Hover information" },
-    D = { "<cmd>lua vim.lsp.buf.definition()<CR>", "Go to Declaration" }
-  }
+    D = { "<cmd>lua vim.lsp.buf.definition()<CR>", "Go to Declaration" },
+  },
 })
-
 
 -- DEBUG
 
