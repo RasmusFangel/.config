@@ -8,12 +8,7 @@ local function get_venv()
   local venv = vim.g.POETRY_VENV
   if venv then
     local params = split(venv, '/')
-    local env = params[table.getn(params) - 2]
-
-    if env == ".pyenv" then
-      return ''
-    end
-    return ' (' .. env .. ')'
+    return ' (' .. params[table.getn(params) - 2] .. ')'
   else
     return ''
   end
