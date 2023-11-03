@@ -23,7 +23,6 @@ local function get_python_path()
   return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
 end
 
-
 LAST_PYTHON_PATH = ""
 
 vim.api.nvim_create_autocmd("BufEnter", {
@@ -32,13 +31,16 @@ vim.api.nvim_create_autocmd("BufEnter", {
   callback = function()
     local python_path = get_python_path()
     if LAST_PYTHON_PATH ~= python_path then
+      -- LSP CONFIG
       local lsp_config = require("lspconfig")
       lsp_config.pyright.setup({
         before_init = function(_, config)
           config.settings.python.pythonPath = python_path
           LAST_PYTHON_PATH = python_path
           vim.g.POETRY_VENV = python_path
-          require('lualine').refresh()
+
+          -- LUALINE
+          require("lualine").refresh()
 
           --Neotest
           require("neotest").setup({
@@ -56,8 +58,8 @@ vim.api.nvim_create_autocmd("BufEnter", {
               }),
             },
           })
-        end
+        end,
       })
     end
-  end
+  end,
 })
