@@ -33,32 +33,33 @@ vim.api.nvim_create_autocmd("BufEnter", {
     if LAST_PYTHON_PATH ~= python_path then
       -- LSP CONFIG
       local lsp_config = require("lspconfig")
+      -- Pyright
       lsp_config.pyright.setup({
         before_init = function(_, config)
           config.settings.python.pythonPath = python_path
           LAST_PYTHON_PATH = python_path
           vim.g.POETRY_VENV = python_path
-
-          -- LUALINE
-          require("lualine").refresh()
-
-          --Neotest
-          require("neotest").setup({
-            adapters = {
-              require("neotest-python")({
-                -- Extra arguments for nvim-dap configuration
-                -- See https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for values
-                dap = {
-                  justMyCode = false,
-                  console = "integratedTerminal",
-                },
-                python = python_path,
-                args = { "--log-level", "DEBUG", "--quiet", "--no-cov" },
-                runner = "pytest",
-              }),
-            },
-          })
         end,
+      })
+
+      -- LUALINE
+      require("lualine").refresh()
+
+      --Neotest
+      require("neotest").setup({
+        adapters = {
+          require("neotest-python")({
+            -- Extra arguments for nvim-dap configuration
+            -- See https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for values
+            dap = {
+              justMyCode = false,
+              console = "integratedTerminal",
+            },
+            python = python_path,
+            args = { "--log-level", "DEBUG", "--quiet", "--no-cov" },
+            runner = "pytest",
+          }),
+        },
       })
     end
   end,
