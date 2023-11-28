@@ -7,13 +7,19 @@ function split(input, delimiter)
 end
 
 local function get_venv()
-  local venv = vim.g.POETRY_VENV
+  local venv = vim.g.ACTIVATED_VENV
   if venv then
-    local params = split(venv, "/")
-    return " (" .. params[table.getn(params) - 2] .. ")"
+    if vim.g.ACTIVATED_VENV_TYPE == "Python" then
+      local params = split(venv, "/")
+      return vim.g.ACTIVATED_VENV_SYM .. " (" .. params[table.getn(params) - 2] .. ")"
+    elseif vim.g.ACTIVATED_VENV_TYPE == "TypeScript" then
+      return vim.g.ACTIVATED_VENV_SYM .. " (" .. venv .. ")"
+    end
   else
     return ""
   end
+
+  return ""
 end
 
 return {
