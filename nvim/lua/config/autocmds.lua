@@ -28,7 +28,9 @@ local function get_python_path_2()
     if project_file ~= "" then
       found = true
     else
-      current_dir = path.join(current_dir, "..")
+      local current_dir_split = split(current_dir, "/")
+      table.remove(current_dir_split, table.getn(current_dir_split))
+      current_dir = "/" .. table.concat(current_dir_split, "/")
       current_depth = current_depth + 1
     end
   end
@@ -40,38 +42,6 @@ local function get_python_path_2()
   else
     return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
   end
-end
-
-local function get_python_path()
-  -- Find pyproject.toml file - means that it's a python project
-  local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
-
-  local project_dir = ""
-  local venv_path = ""
-
-  if project_file ~= "" then
-    -- Get directory for project
-    project_dir = vim.fs.dirname(project_file)
-
-    if project_dir == "." then
-      project_dir = vim.fn.trim(vim.fn.system("pwd"))
-    else
-      project_dir = vim.fn.getcwd()
-    end
-
-    venv_path = path.join(project_dir, ".venv")
-    require("notify")("venv_path: " .. venv_path)
-  end
-
-  if project_file ~= "" and vim.fn.isdirectory(venv_path) ~= 0 then
-    -- Use project directory
-    local project_venv_bin = path.join(venv_path, "bin", "python")
-    return project_venv_bin
-  end
-
-  -- Fallback to system Python.
-  local python_path = vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
-  return python_path
 end
 
 local function get_node_path()
