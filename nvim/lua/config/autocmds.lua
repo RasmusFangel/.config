@@ -90,7 +90,7 @@ local function set_lualine(type, venv)
     if string.find(venv, "python3") and not string.find(venv, ".venv") then
       vim.g.LL_ACTIVATED_VENV = " ( " .. params[table.getn(params) - 0] .. " )"
     else
-      vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 3] .. " | .venv)"
+      vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 3] .. " | .venv )"
     end
   end
   if type == "ts" then
