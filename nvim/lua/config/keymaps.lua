@@ -17,6 +17,10 @@ wk.register({
   fg = { ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Live Grep with Args" },
 })
 
+wk.register({
+  z = { "<cmd>:ZenMode<cr>", "Toggle ZEN mode" },
+}, { prefix = "<leader>" })
+
 -- DAP
 local dap = require("dap")
 
