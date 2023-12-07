@@ -6,8 +6,7 @@
     "lazyvim.plugins.extras.editor.symbols-outline",
     "lazyvim.plugins.extras.lang.python",
     "lazyvim.plugins.extras.test.core",
-    "lazyvim.plugins.extras.ui.alpha",
-    "lazyvim.plugins.extras.util.project"
+    "lazyvim.plugins.extras.ui.alpha"
   ],
   "news": {
     "NEWS.md": "2123"

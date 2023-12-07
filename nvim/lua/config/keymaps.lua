@@ -50,6 +50,7 @@ local actions = toggleterm_manager.actions
 toggleterm_manager.setup({
   mappings = {
     i = {
+      ["<C-s>"] = { action = actions.open_term, exit_on_action = true }, -- toggles terminal open/closed
       ["<C-p>"] = { action = actions.open_term, exit_on_action = true }, -- toggles terminal open/closed
       ["<C-i>"] = { action = actions.create_term, exit_on_action = false }, -- creates a new terminal buffer
       ["<C-n>"] = { action = actions.create_and_name_term, exit_on_action = false }, -- creates a new terminal buffer

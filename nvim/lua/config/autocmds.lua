@@ -14,6 +14,34 @@ local function split(input, delimiter)
   return arr
 end
 
+MAX_SEARCH_DEPTH = 6
+
+local function get_python_path_2()
+  local current_dir = vim.fs.dirname(vim.api.nvim_buf_get_name(0))
+
+  local current_depth = 0
+  local found = false
+
+  while current_depth <= MAX_SEARCH_DEPTH and found == false do
+    local project_file = vim.fn.findfile("pyproject.toml", current_dir, 0)
+
+    if project_file ~= "" then
+      found = true
+    else
+      current_dir = path.join(current_dir, "..")
+      current_depth = current_depth + 1
+    end
+  end
+
+  local venv_path = path.join(current_dir, ".venv")
+
+  if vim.fn.isdirectory(venv_path) ~= 0 then
+    return path.join(venv_path, "bin", "python")
+  else
+    return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
+  end
+end
+
 local function get_python_path()
   -- Find pyproject.toml file - means that it's a python project
   local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
@@ -24,7 +52,15 @@ local function get_python_path()
   if project_file ~= "" then
     -- Get directory for project
     project_dir = vim.fs.dirname(project_file)
-    venv_path = project_dir .. "/.venv"
+
+    if project_dir == "." then
+      project_dir = vim.fn.trim(vim.fn.system("pwd"))
+    else
+      project_dir = vim.fn.getcwd()
+    end
+
+    venv_path = path.join(project_dir, ".venv")
+    require("notify")("venv_path: " .. venv_path)
   end
 
   if project_file ~= "" and vim.fn.isdirectory(venv_path) ~= 0 then
@@ -126,7 +162,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Python Venv on BufEnter",
   pattern = "*.py",
   callback = function()
-    local python_path = get_python_path()
+    local python_path = get_python_path_2()
     if LAST_ACTIVATED_PATH ~= python_path then
       set_lspconfig(python_path)
       set_neotest(python_path)
