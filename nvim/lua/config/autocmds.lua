@@ -16,7 +16,7 @@ end
 
 MAX_SEARCH_DEPTH = 6
 
-local function get_python_path_2()
+local function get_python_path_venv()
   local current_dir = vim.fs.dirname(vim.api.nvim_buf_get_name(0))
 
   local current_depth = 0
@@ -42,6 +42,26 @@ local function get_python_path_2()
   else
     return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
   end
+end
+
+local function get_python_path_cache()
+  -- Find pyproject.toml file - means that it's a python project
+  local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
+
+  if project_file ~= "" then
+    -- Get directory for project
+    local project_dir = vim.fs.dirname(project_file)
+    local file_name_path = project_dir .. "/.poetryenv"
+
+    -- Use project directory
+    if #vim.fn.readfile(file_name_path, "") > 0 then
+      local venv = vim.fn.trim(vim.fn.system("cat " .. project_dir .. "/.poetryenv"))
+      return path.join(venv, "bin", "python")
+    end
+  end
+
+  -- Fallback to system Python.
+  return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
 end
 
 local function get_node_path()
@@ -96,7 +116,7 @@ local function set_lualine(type, venv)
     if string.find(venv, "python3") and not string.find(venv, ".venv") then
       vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 0] .. ")"
     else
-      vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 3] .. " | .venv)"
+      vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 2] .. ")"
     end
   end
   if type == "ts" then
@@ -132,7 +152,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Python Venv on BufEnter",
   pattern = "*.py",
   callback = function()
-    local python_path = get_python_path_2()
+    local python_path = get_python_path_cache()
     if LAST_ACTIVATED_PATH ~= python_path then
       set_lspconfig(python_path)
       set_neotest(python_path)
