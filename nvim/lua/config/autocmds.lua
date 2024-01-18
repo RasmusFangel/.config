@@ -14,36 +14,6 @@ local function split(input, delimiter)
   return arr
 end
 
-MAX_SEARCH_DEPTH = 6
-
-local function get_python_path_venv()
-  local current_dir = vim.fs.dirname(vim.api.nvim_buf_get_name(0))
-
-  local current_depth = 0
-  local found = false
-
-  while current_depth <= MAX_SEARCH_DEPTH and found == false do
-    local project_file = vim.fn.findfile("pyproject.toml", current_dir, 0)
-
-    if project_file ~= "" then
-      found = true
-    else
-      local current_dir_split = split(current_dir, "/")
-      table.remove(current_dir_split, table.getn(current_dir_split))
-      current_dir = "/" .. table.concat(current_dir_split, "/")
-      current_depth = current_depth + 1
-    end
-  end
-
-  local venv_path = path.join(current_dir, ".venv")
-
-  if vim.fn.isdirectory(venv_path) ~= 0 then
-    return path.join(venv_path, "bin", "python")
-  else
-    return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
-  end
-end
-
 local function get_python_path_cache()
   -- Find pyproject.toml file - means that it's a python project
   local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
@@ -56,7 +26,7 @@ local function get_python_path_cache()
     -- Use project directory
     if #vim.fn.readfile(file_name_path, "") > 0 then
       local venv = vim.fn.trim(vim.fn.system("cat " .. project_dir .. "/.poetryenv"))
-      return path.join(venv, "bin", "python")
+      return venv
     end
   end
 
@@ -78,7 +48,77 @@ local function get_node_path()
   return "undefined"
 end
 
+local function get_rust_path()
+  -- Find pyproject.toml file - means that it's a python project
+  local project_file = vim.fn.findfile("Cargo.toml", vim.api.nvim_buf_get_name(0) .. ";")
+
+  if project_file ~= "" then
+    -- Get directory for project
+    local project_dir = vim.fs.dirname(project_file)
+
+    return project_dir
+  end
+
+  return "undefined"
+end
+
+ALREADY_ADDED_TO_DEBUG = {}
+
+local function set_dap_python(python_path)
+  local full_buffer_path = vim.fn.expand("%:p")
+  if string.find(full_buffer_path, "data-api") ~= "" and ALREADY_ADDED_TO_DEBUG.python_path == nil then
+    table.insert(require("dap").configurations.python, {
+      name = "Data-API",
+      type = "python",
+      request = "launch",
+      module = "uvicorn",
+      python = path.join(python_path, "bin", "python"),
+      args = {
+        "data_api.app:app",
+        -- "--reload",
+        "--port 9000",
+        "--host 0.0.0.0",
+      },
+      host = "0.0.0.0",
+      port = 9000,
+      jinja = true,
+      env = {
+        AWS_PROFILE = "boston-dev",
+        DEPLOYMENT_ENVIRONMENT = "DEV",
+        DOMAIN_NAME_UI = "https://dev.elysia.co",
+      },
+    })
+    table.insert(ALREADY_ADDED_TO_DEBUG, python_path)
+  end
+  if string.find(full_buffer_path, "insights-api") ~= "" and ALREADY_ADDED_TO_DEBUG.python_path == nil then
+    table.insert(require("dap").configurations.python, {
+      name = "Insights-API",
+      type = "python",
+      request = "launch",
+      module = "uvicorn",
+      python = path.join(python_path, "bin", "python"),
+      args = {
+        "insights_api.app:app",
+        -- "--reload",
+        "--port 9001",
+        "--host 0.0.0.0",
+      },
+      host = "0.0.0.0",
+      port = 9001,
+      jinja = true,
+      env = {
+        AWS_PROFILE = "boston-dev",
+        DEPLOYMENT_ENVIRONMENT = "DEV",
+        DOMAIN_NAME_UI = "https://dev.elysia.co",
+      },
+    })
+    table.insert(ALREADY_ADDED_TO_DEBUG, python_path)
+  end
+end
+
 local function set_neotest(python_path)
+  python_path = path.join(python_path, "bin", "python")
+
   require("neotest").setup({
     adapters = {
       require("neotest-python")({
@@ -101,6 +141,7 @@ local function set_lspconfig(python_path)
   -- Pyright
   lsp_config.pyright.setup({
     before_init = function(_, config)
+      python_path = path.join(python_path, "bin", "python")
       config.settings.python.pythonPath = python_path
       LAST_ACTIVATED_PATH = python_path
       vim.g.ACTIVATED_VENV = python_path
@@ -110,6 +151,8 @@ local function set_lspconfig(python_path)
 end
 
 local function set_lualine(type, venv)
+  venv = path.join(venv, "bin", "python")
+
   local params = split(venv, "/")
   if type == "py" then
     -- If using system python
@@ -121,6 +164,9 @@ local function set_lualine(type, venv)
   end
   if type == "ts" then
     vim.g.LL_ACTIVATED_VENV = "ʦ (" .. params[table.getn(params)] .. " | node_modules)"
+  end
+  if type == "rs" then
+    vim.g.LL_ACTIVATED_VENV = "🦀"
   end
 
   require("lualine").refresh()
@@ -138,11 +184,24 @@ vim.api.nvim_create_autocmd("ExitPre", {
 })
 
 vim.api.nvim_create_autocmd("BufEnter", {
+  desc = "Change Rust on BufEnter",
+  pattern = "*.rs",
+  callback = function()
+    local rust_path = get_rust_path()
+    if LAST_ACTIVATED_PATH ~= rust_path then
+      LAST_ACTIVATED_PATH = rust_path
+      set_lualine("rs", rust_path)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Node Venv on BufEnter",
   pattern = "*.ts",
   callback = function()
     local node_path = get_node_path()
     if LAST_ACTIVATED_PATH ~= node_path then
+      LAST_ACTIVATED_PATH = node_path
       set_lualine("ts", node_path)
     end
   end,
@@ -154,8 +213,11 @@ vim.api.nvim_create_autocmd("BufEnter", {
   callback = function()
     local python_path = get_python_path_cache()
     if LAST_ACTIVATED_PATH ~= python_path then
+      LAST_ACTIVATED_PATH = python_path
+      vim.fn.setenv("VIRTUAL_ENV", python_path)
       set_lspconfig(python_path)
       set_neotest(python_path)
+      set_dap_python(python_path)
       set_lualine("py", python_path)
     end
   end,

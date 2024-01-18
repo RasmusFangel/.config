@@ -22,6 +22,12 @@ wk.register({
 }, { prefix = "<leader>" })
 
 -- DAP
+wk.register({
+  t = {
+    l = { ":lua require('dap-python').load_launchjs('~/Development/launch.json')" },
+  },
+}, { prefix = "<leader>" })
+
 local dap = require("dap")
 
 vim.keymap.set("n", "<F5>", function()
