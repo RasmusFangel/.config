@@ -62,58 +62,57 @@ local function get_rust_path()
   return "undefined"
 end
 
-ALREADY_ADDED_TO_DEBUG = {}
+local function set_dap_python()
+  local insights_venv = vim.fn.trim(
+    vim.fn.system(
+      "cat /Users/rasmushansen/Development/boston-cloud/services/insights-api/functions/insights_api/.poetryenv"
+    )
+  )
+  local data_api_venv =
+    vim.fn.trim(vim.fn.system("cat /Users/rasmushansen/Development/boston-cloud/services/data-api/.poetryenv"))
 
-local function set_dap_python(python_path)
-  local full_buffer_path = vim.fn.expand("%:p")
-  if string.find(full_buffer_path, "data-api") ~= "" and ALREADY_ADDED_TO_DEBUG.python_path == nil then
-    table.insert(require("dap").configurations.python, {
-      name = "Data-API",
-      type = "python",
-      request = "launch",
-      module = "uvicorn",
-      python = path.join(python_path, "bin", "python"),
-      args = {
-        "data_api.app:app",
-        -- "--reload",
-        "--port 9000",
-        "--host 0.0.0.0",
-      },
-      host = "0.0.0.0",
-      port = 9000,
-      jinja = true,
-      env = {
-        AWS_PROFILE = "boston-dev",
-        DEPLOYMENT_ENVIRONMENT = "DEV",
-        DOMAIN_NAME_UI = "https://dev.elysia.co",
-      },
-    })
-    table.insert(ALREADY_ADDED_TO_DEBUG, python_path)
-  end
-  if string.find(full_buffer_path, "insights-api") ~= "" and ALREADY_ADDED_TO_DEBUG.python_path == nil then
-    table.insert(require("dap").configurations.python, {
-      name = "Insights-API",
-      type = "python",
-      request = "launch",
-      module = "uvicorn",
-      python = path.join(python_path, "bin", "python"),
-      args = {
-        "insights_api.app:app",
-        -- "--reload",
-        "--port 9001",
-        "--host 0.0.0.0",
-      },
-      host = "0.0.0.0",
-      port = 9001,
-      jinja = true,
-      env = {
-        AWS_PROFILE = "boston-dev",
-        DEPLOYMENT_ENVIRONMENT = "DEV",
-        DOMAIN_NAME_UI = "https://dev.elysia.co",
-      },
-    })
-    table.insert(ALREADY_ADDED_TO_DEBUG, python_path)
-  end
+  table.insert(require("dap").configurations.python, 1, {
+    name = "Insights-API",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = path.join(insights_venv, "bin", "python"),
+    args = {
+      "insights_api.app:app",
+      -- "--reload",
+      "--port 9001",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9001,
+    jinja = true,
+    env = {
+      KONG_PAT = vim.fn.trim(
+        vim.fn.system("cat " .. "/Users/rasmushansen/Development/boston-cloud/services/insights-api/secrets.txt")
+      ),
+    },
+  })
+  table.insert(require("dap").configurations.python, 1, {
+    name = "Data-API",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = path.join(data_api_venv, "bin", "python"),
+    args = {
+      "data_api.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9000,
+    jinja = true,
+    env = {
+      AWS_PROFILE = "boston-dev",
+      DEPLOYMENT_ENVIRONMENT = "DEV",
+      DOMAIN_NAME_UI = "https://dev.elysia.co",
+    },
+  })
 end
 
 local function set_neotest(python_path)
@@ -217,7 +216,6 @@ vim.api.nvim_create_autocmd("BufEnter", {
       vim.fn.setenv("VIRTUAL_ENV", python_path)
       set_lspconfig(python_path)
       set_neotest(python_path)
-      set_dap_python(python_path)
       set_lualine("py", python_path)
     end
   end,
@@ -229,5 +227,13 @@ vim.api.nvim_create_autocmd({ "BufEnter", "InsertLeave", "BufWritePost" }, {
   pattern = "*.cfn.yaml",
   callback = function()
     require("lint").try_lint("cfn_lint", { "--non-zero-exit-code none" })
+  end,
+})
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  desc = "Load debug configs on VimEnter",
+  pattern = "*",
+  callback = function()
+    set_dap_python()
   end,
 })
