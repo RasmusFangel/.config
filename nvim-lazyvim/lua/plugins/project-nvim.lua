@@ -1,16 +1,9 @@
 return {
   "ahmedkhalf/project.nvim",
   opts = {
-    manual_mode = true,
+    manual_mode = false,
     patterns = {
-      -- ".git",
-      "_darcs",
-      -- ".hg",
-      ".bzr",
-      -- ".svn",
-      -- "Makefile",
-      "package.json",
-      "pyproject.toml",
+      ".project",
     },
     silentchdir = false,
     scope_chdir = "global",
