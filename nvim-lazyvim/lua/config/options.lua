@@ -60,3 +60,5 @@ local function custom_on_publish_diagnostics(a, params, client_id, c, config)
 end
 
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(custom_on_publish_diagnostics, {})
+
+vim.opt.scrolloff = 8

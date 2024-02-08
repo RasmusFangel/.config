@@ -3,7 +3,7 @@ return {
   opts = {
     manual_mode = false,
     patterns = {
-      ".project",
+      ".pyproject.toml",
     },
     silentchdir = false,
     scope_chdir = "global",

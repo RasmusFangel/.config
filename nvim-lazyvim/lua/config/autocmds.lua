@@ -34,6 +34,16 @@ local function get_python_path_cache()
   return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
 end
 
+local function get_project_dir()
+  local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
+
+  if project_file ~= "" then
+    return vim.fs.dirname(project_file)
+  end
+
+  return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
+end
+
 local function get_node_path()
   -- Find pyproject.toml file - means that it's a python project
   local project_file = vim.fn.findfile("package.json", vim.api.nvim_buf_get_name(0) .. ";")
@@ -62,21 +72,14 @@ local function get_rust_path()
   return "undefined"
 end
 
-local function set_dap_python()
-  local insights_venv = vim.fn.trim(
-    vim.fn.system(
-      "cat /Users/rasmushansen/Development/boston-cloud/services/insights-api/functions/insights_api/.poetryenv"
-    )
-  )
-  local data_api_venv =
-    vim.fn.trim(vim.fn.system("cat /Users/rasmushansen/Development/boston-cloud/services/data-api/.poetryenv"))
-
+local function set_dap_python(python_path)
+  -- BEAM
   table.insert(require("dap").configurations.python, 1, {
     name = "Insights-API",
     type = "python",
     request = "launch",
     module = "uvicorn",
-    python = path.join(insights_venv, "bin", "python"),
+    python = python_path,
     args = {
       "insights_api.app:app",
       -- "--reload",
@@ -97,7 +100,7 @@ local function set_dap_python()
     type = "python",
     request = "launch",
     module = "uvicorn",
-    python = path.join(data_api_venv, "bin", "python"),
+    python = python_path,
     args = {
       "data_api.app:app",
       -- "--reload",
@@ -113,11 +116,36 @@ local function set_dap_python()
       DOMAIN_NAME_UI = "https://dev.elysia.co",
     },
   })
+
+  -- KINDLET
+  table.insert(require("dap").configurations.python, 1, {
+    name = "Kindlet | Email-Subscriptions",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = python_path,
+    args = {
+      "email_subscriptions.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9000,
+    jinja = true,
+    env = {
+      ENV = "LOCALDEV",
+      API_NAME = "Email Subscriptions",
+      API_DESCRIPTION = "LOCALDEV",
+      API_VERSION = "0.1.0",
+      AWS_PROFILE = "kindlet",
+      REGION = "eu-west-1",
+    },
+  })
 end
 
-local function set_neotest(python_path)
-  python_path = path.join(python_path, "bin", "python")
-
+local function set_neotest()
+  local python_path = path.join(".venv", "bin", "python")
   require("neotest").setup({
     adapters = {
       require("neotest-python")({
@@ -135,12 +163,12 @@ local function set_neotest(python_path)
   })
 end
 
-local function set_lspconfig(python_path)
+local function set_lspconfig()
   local lsp_config = require("lspconfig")
+  local python_path = path.join(".venv", "bin", "python")
   -- Pyright
   lsp_config.pyright.setup({
     before_init = function(_, config)
-      python_path = path.join(python_path, "bin", "python")
       config.settings.python.pythonPath = python_path
       LAST_ACTIVATED_PATH = python_path
       vim.g.ACTIVATED_VENV = python_path
@@ -150,15 +178,13 @@ local function set_lspconfig(python_path)
 end
 
 local function set_lualine(type, venv)
-  venv = path.join(venv, "bin", "python")
-
   local params = split(venv, "/")
   if type == "py" then
     -- If using system python
-    if string.find(venv, "python3") and not string.find(venv, ".venv") then
+    if string.find(venv, "python3") then
       vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 0] .. ")"
     else
-      vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 2] .. ")"
+      vim.g.LL_ACTIVATED_VENV = " (.venv)"
     end
   end
   if type == "ts" then
@@ -210,13 +236,14 @@ vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Python Venv on BufEnter",
   pattern = "*.py",
   callback = function()
-    local python_path = get_python_path_cache()
-    if LAST_ACTIVATED_PATH ~= python_path then
-      LAST_ACTIVATED_PATH = python_path
-      vim.fn.setenv("VIRTUAL_ENV", python_path)
-      set_lspconfig(python_path)
-      set_neotest(python_path)
-      set_lualine("py", python_path)
+    local project_dir = get_project_dir()
+    local venv_dir = path.join(project_dir, "bin", "python")
+    if LAST_ACTIVATED_PATH ~= venv_dir then
+      LAST_ACTIVATED_PATH = venv_dir
+      vim.fn.setenv("VIRTUAL_ENV", venv_dir)
+      set_lspconfig()
+      set_neotest()
+      set_lualine("py", project_dir)
     end
   end,
 })
