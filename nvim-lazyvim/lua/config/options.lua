@@ -61,4 +61,4 @@ end
 
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(custom_on_publish_diagnostics, {})
 
-vim.opt.scrolloff = 8
+vim.opt.scrolloff = 10

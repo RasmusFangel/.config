@@ -6,7 +6,8 @@ config.font_size = 14
 
 config.color_scheme = "Tokyo Night Moon"
 config.hide_tab_bar_if_only_one_tab = true
-config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+config.window_decorations = "RESIZE"
+config.window_background_opacity = 0.94
 
 config.window_padding = {
 	left = 2,
