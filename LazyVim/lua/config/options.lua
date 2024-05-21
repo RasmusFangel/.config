@@ -29,6 +29,7 @@ local function filter_diagnostics(diagnostic)
       -- " is not defined",
       " is not accessed",
       " overrides class variable of same name in class",
+      "Stub file not found for ",
     },
   }
 

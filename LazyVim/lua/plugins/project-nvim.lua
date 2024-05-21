@@ -4,6 +4,7 @@ return {
     manual_mode = false,
     patterns = {
       ".pyproject.toml",
+      "package.json"
     },
     silentchdir = false,
     scope_chdir = "global",

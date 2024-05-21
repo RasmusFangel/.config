@@ -70,6 +70,7 @@ local function set_dap_python()
     host = "0.0.0.0",
     port = 9001,
     jinja = true,
+    justMyCode = false,
     env = {
       KONG_PAT = vim.fn.trim(
         vim.fn.system("cat " .. "/Users/rasmushansen/Development/boston-cloud/services/insights-api/secrets.txt")
@@ -91,6 +92,7 @@ local function set_dap_python()
     host = "0.0.0.0",
     port = 9000,
     jinja = true,
+    justMyCode = false,
     env = {
       AWS_PROFILE = "boston-dev",
       DEPLOYMENT_ENVIRONMENT = "DEV",
@@ -114,6 +116,7 @@ local function set_dap_python()
     host = "0.0.0.0",
     port = 9000,
     jinja = true,
+    justMyCode = false,
     env = {
       ENV = "LOCALDEV",
       API_NAME = "Email Subscriptions",
@@ -151,11 +154,22 @@ local function set_lspconfig()
   lsp_config.pyright.setup({
     before_init = function(_, config)
       config.settings.python.pythonPath = python_path
-      LAST_ACTIVATED_PATH = python_path
-      vim.g.ACTIVATED_VENV = python_path
-      vim.g.ACTIVATED_VENV_SYM = ""
+      config.settings.python.analysis.stubPath = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy", "python-type-stubs")
     end,
+    settings = {
+      python = {
+        analysis = {
+          -- ignore = {"**/tests/**"},
+          typeCheckingMode = "strict",
+          diagnosticMode = "openFilesOnly",
+        },
+      },
+    },
   })
+
+  LAST_ACTIVATED_PATH = python_path
+  vim.g.ACTIVATED_VENV = python_path
+  vim.g.ACTIVATED_VENV_SYM = ""
 end
 
 local function set_lualine(type, venv)
@@ -238,10 +252,12 @@ vim.api.nvim_create_autocmd({ "BufEnter", "InsertLeave", "BufWritePost" }, {
   end,
 })
 
-vim.api.nvim_create_autocmd("VimEnter", {
+vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Load debug configs on VimEnter",
-  pattern = "*",
+  pattern = "*.py",
+  once = true,
   callback = function()
     set_dap_python()
   end,
 })
+
