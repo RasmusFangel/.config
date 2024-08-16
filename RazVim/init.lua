@@ -22,4 +22,4 @@ vim.g.maplocalleader = "\\"
 require("lazy").setup("plugins")
 require("core")
 --require("autocmds")
-vim.cmd[[colorscheme tokyonight]]
+-- vim.cmd[[colorscheme tokyonight]]

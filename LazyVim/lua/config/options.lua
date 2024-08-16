@@ -66,3 +66,10 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(custom_on_pub
 vim.opt.scrolloff = 10
 
 vim.g.autoformat = false
+
+vim.opt.cursorline = false
+
+vim.diagnostic.config({
+  virtual_text = false,
+})
+vim.diagnostic.config({ virtual_lines = { only_current_line = true } })

@@ -1,10 +1,13 @@
 return {
   "ahmedkhalf/project.nvim",
   opts = {
-    manual_mode = false,
+    manual_mode = true,
     patterns = {
       ".pyproject.toml",
-      "package.json"
+      "package.json",
+      "cargo.toml",
+      "Readme.md",
+      ".git"
     },
     silentchdir = false,
     scope_chdir = "global",

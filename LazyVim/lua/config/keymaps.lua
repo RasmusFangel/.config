@@ -6,14 +6,6 @@
 local wk = require("which-key")
 
 wk.register({
-  T = {
-    name = "Terminal",
-    t = { "<cmd>:ToggleTerm<cr>", "Toggle Terminal" },
-    m = { "<cmd>:Telescope toggleterm_manager<cr>", "Term Manager" },
-  },
-}, { prefix = "<leader>" })
-
-wk.register({
   fg = { ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Live Grep with Args" },
 })
 
