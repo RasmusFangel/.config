@@ -55,6 +55,35 @@ local function get_rust_path()
   return "undefined"
 end
 
+local function set_lazy_root()
+  -- Get the LazyVim module
+  local LazyVim = require("lazyvim.util")
+
+  -- Store the original root function
+  local original_root = LazyVim.root
+
+  -- Create a new root function that wraps the original
+  LazyVim.root = setmetatable({}, {
+    __call = function(_, ...)
+      -- Your custom logic here
+      local custom_root = current_cwd
+
+      -- Optionally, you can still use the original function if needed
+      -- local original_result = original_root(...)
+
+      -- Return your custom root or the result of some custom logic
+      return custom_root
+    end,
+  })
+
+  -- Ensure other methods of the root table are still accessible
+  for k, v in pairs(original_root) do
+    if k ~= "__call" then
+      LazyVim.root[k] = v
+    end
+  end
+end
+
 local function set_dap_python()
   local python_path = vim.fn.exepath("python")
 
@@ -179,7 +208,7 @@ function CheckForPytestCov()
       -- Add your desired action here
     end
   else
-    -- print("requirements.txt not found in the current working directory")
+    print("requirements.txt not found in the current working directory")
   end
 end
 
@@ -262,9 +291,7 @@ vim.api.nvim_create_autocmd("ExitPre", {
   callback = function()
     LAST_ACTIVATED_PATH = ""
     vim.g.LL_ACTIVATED_VENV = ""
-    -- vim.cmd("cd " .. vim.fn.fnameescape(current_cwd))
-
-
+    vim.cmd("cd " .. vim.fn.fnameescape(current_cwd))
   end,
 })
 
@@ -296,7 +323,6 @@ vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Python Venv on BufEnter",
   pattern = "*.py",
   callback = function()
-    local current_file = vim.fn.expand("%:p")
     local project_dir = get_project_dir()
     local cwd = vim.fn.getcwd()
 
@@ -319,14 +345,15 @@ vim.api.nvim_create_autocmd("BufEnter", {
         vim.fn.setenv("PATH", new_path)
 
         -- Change directory to project root
-        -- local project_root = vim.fn.fnamemodify(venv, ":h")
-        -- if vim.fn.isdirectory(project_root) == 1 then
-        --   vim.cmd("cd " .. vim.fn.fnameescape(project_root))
-        -- end
+        local project_root = vim.fn.fnamemodify(venv, ":h")
+        if vim.fn.isdirectory(project_root) == 1 then
+          vim.cmd("cd " .. vim.fn.fnameescape(project_root))
+        end
 
         set_lspconfig()
         set_neotest()
         set_lualine("py", vim.env.VIRTUAL_ENV)
+        set_lazy_root()
       end
     end
 
@@ -364,13 +391,3 @@ vim.api.nvim_create_autocmd("BufEnter", {
     })
   end,
 })
-
--- vim.api.nvim_create_autocmd("WinEnter", {
---   callback = function()
---     local floating = vim.api.nvim_win_get_config(0).relative ~= ""
---     vim.diagnostic.config({
---       virtual_text = floating,
---       virtual_lines = not floating,
---     })
---   end,
--- })
