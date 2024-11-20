@@ -1,5 +1,6 @@
 -- Autocmds are automatically loaded on the VeryLazy event
--- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+-- Defauot autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+-- the
 -- Add any additional autocmds here
 
 local util = require("lspconfig/util")
@@ -7,6 +8,19 @@ local util = require("lspconfig/util")
 local path = util.path
 
 local current_cwd = vim.fn.getcwd()
+
+local function get_project_root()
+  local project = require("project_nvim.project")
+  local project_root = project.get_project_root()
+  local result = ""
+  if project_root then
+    result = project_root
+  else
+    result = current_cwd
+  end
+  -- require("notify")("Project Root: " .. result)
+  return result
+end
 
 local function split(input, delimiter)
   local arr = {}
@@ -16,15 +30,18 @@ local function split(input, delimiter)
   return arr
 end
 
-local function get_project_dir()
+local function get_python_project_dir()
   local project_file = vim.fn.findfile("pyproject.toml", vim.api.nvim_buf_get_name(0) .. ";")
 
   if project_file ~= "" then
     local result = vim.fs.dirname(project_file)
+    -- require("notify")("Python Project Dir: " .. result)
     return result
   end
 
-  return vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
+  local result = vim.fn.exepath("python3") or vim.fn.exepath("python") or "python"
+  -- require("notify")("Python Project Dir: " .. result)
+  return result
 end
 
 local function get_node_path()
@@ -66,7 +83,7 @@ local function set_lazy_root()
   LazyVim.root = setmetatable({}, {
     __call = function(_, ...)
       -- Your custom logic here
-      local custom_root = current_cwd
+      local custom_root = get_project_root()
 
       -- Optionally, you can still use the original function if needed
       -- local original_result = original_root(...)
@@ -89,7 +106,7 @@ local function set_dap_python()
 
   -- BEAM
   table.insert(require("dap").configurations.python, 1, {
-    name = "Insights-API",
+    name = "Boston | Insights-API",
     type = "python",
     request = "launch",
     module = "uvicorn",
@@ -110,8 +127,9 @@ local function set_dap_python()
       ),
     },
   })
+
   table.insert(require("dap").configurations.python, 1, {
-    name = "Data-API",
+    name = "Boston | Data-API",
     type = "python",
     request = "launch",
     module = "uvicorn",
@@ -130,6 +148,94 @@ local function set_dap_python()
       AWS_PROFILE = "boston-dev",
       DEPLOYMENT_ENVIRONMENT = "LOCAL",
       DOMAIN_NAME_UI = "https://dev.elysia.co",
+    },
+  })
+
+  table.insert(require("dap").configurations.python, 1, {
+    name = "CVaaS | ExVe Resource Provider API",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = python_path,
+    args = {
+      "resource_provider_api.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9000,
+    jinja = true,
+    justMyCode = false,
+    env = {
+      DEPLOYMENT_ENVIRONMENT = "LOCAL",
+    },
+  })
+
+  table.insert(require("dap").configurations.python, 1, {
+    name = "CVaaS | ExVe Ops API",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = python_path,
+    args = {
+      "exve_ops_api.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9000,
+    jinja = true,
+    justMyCode = false,
+    env = {
+      DEPLOYMENT_ENVIRONMENT = "LOCAL",
+    },
+  })
+
+  table.insert(require("dap").configurations.python, 1, {
+    name = "CVaaS | Auth Service",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = python_path,
+    args = {
+      "workos_auth.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9000,
+    jinja = true,
+    justMyCode = false,
+    env = {
+      DEPLOYMENT_ENVIRONMENT = "LOCAL",
+      DOMAIN = "http://localhost:9000",
+      WEBAPP_DOMAINS = "https://developer-test.cvaas.cloud",
+    },
+  })
+
+  table.insert(require("dap").configurations.python, 1, {
+    name = "CVaaS | ExVe Api Portals",
+    type = "python",
+    request = "launch",
+    module = "uvicorn",
+    python = python_path,
+    args = {
+      "exve_api_portals.app:app",
+      -- "--reload",
+      "--port 9000",
+      "--host 0.0.0.0",
+    },
+    host = "0.0.0.0",
+    port = 9001,
+    jinja = true,
+    justMyCode = false,
+    env = {
+      DEPLOYMENT_ENVIRONMENT = "LOCAL",
+      DOMAIN = "http://localhost:9000",
+      WEBAPP_DOMAINS = "https://developer-test.cvaas.cloud",
     },
   })
 
@@ -270,7 +376,11 @@ local function set_lualine(type, venv)
     if string.find(venv, "python3") then
       vim.g.LL_ACTIVATED_VENV = " (" .. params[table.getn(params) - 0] .. ")"
     else
-      vim.g.LL_ACTIVATED_VENV = " ( .venv | " .. params[table.getn(params) - 1] .. " )"
+      local env_name = params[table.getn(params) - 1]
+      if env_name == "." then
+        env_name = params[table.getn(params) - 2]
+      end
+      vim.g.LL_ACTIVATED_VENV = " ( .venv | " .. env_name .. " )"
     end
   end
   if type == "ts" then
@@ -323,7 +433,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Change Python Venv on BufEnter",
   pattern = "*.py",
   callback = function()
-    local project_dir = get_project_dir()
+    local project_dir = get_python_project_dir()
     local cwd = vim.fn.getcwd()
 
     local venv = path.join(project_dir, ".venv")
@@ -353,7 +463,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
         set_lspconfig()
         set_neotest()
         set_lualine("py", vim.env.VIRTUAL_ENV)
-        set_lazy_root()
+        -- set_lazy_root()
       end
     end
 
@@ -384,6 +494,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
 vim.api.nvim_create_autocmd("BufEnter", {
   desc = "test",
   pattern = "*",
+  once = false,
   callback = function()
     vim.diagnostic.config({
       virtual_text = false,

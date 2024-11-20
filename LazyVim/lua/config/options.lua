@@ -69,7 +69,11 @@ vim.g.autoformat = false
 
 vim.opt.cursorline = false
 
-vim.diagnostic.config({
-  virtual_text = false,
-})
-vim.diagnostic.config({ virtual_lines = { only_current_line = true } })
+-- vim.diagnostic.config({
+--   virtual_text = false,
+--   virtual_lines = { only_current_line = true },
+-- })
+--
+vim.g.root_spec = { ".project" }
+
+vim.cmd("set guicursor=n-v-c:blinkon1,i:blinkon1-ver25")
