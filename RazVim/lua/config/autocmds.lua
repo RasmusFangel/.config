@@ -1,4 +1,5 @@
 local util = require("lspconfig/util")
+local path = util.path
 
 local FILES_TO_LOOK_FOR = {
   ["pyproject.toml"] = {
@@ -61,15 +62,28 @@ end
 
 local function refresh_lspconfig()
   local lsp_config = require("lspconfig")
-  -- Pyright
-  lsp_config.pyright.setup({})
+  lsp_config.pyright.setup {
+  settings = {
+    pyright = {
+      -- Using Ruff's import organizer
+      disableOrganizeImports = true,
+    },
+    python = {
+      analysis = {
+        -- Ignore all files for analysis to exclusively use Ruff for linting
+        ignore = { '*' },
+      },
+    },
+  },
+}
 end
 
 local LAST_ACTIVATED_ENV = ""
+local start_path = vim.fn.getenv("PATH")
 
 vim.api.nvim_create_autocmd("BufEnter", {
   desc = "Load debug configs on VimEnter",
-  pattern = "*.py",  -- TODO: at some point, update this
+  pattern = "*",
   once = false,
   callback = function()
     local env_info = get_venv_info()
@@ -85,12 +99,42 @@ vim.api.nvim_create_autocmd("BufEnter", {
       if LAST_ACTIVATED_ENV ~= venv_abs then
         LAST_ACTIVATED_ENV = venv_abs
         vim.fn.setenv("VIRTUAL_ENV", venv_abs)
+
+        local new_path = path.join(venv_abs, "bin") .. ":" .. start_path
+        vim.fn.setenv("PATH", new_path)
         refresh_lspconfig()
         refresh_lualine(env_info)
       end
-
     end
-
-
   end,
 })
+
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function()
+    local wk = require("which-key")
+
+    wk.add({
+      { "gd", vim.lsp.buf.definition, desc = "go to definition" },
+      { "gi", vim.lsp.buf.implementation, desc = "go to implementation" },
+      { "<leader>ca", vim.lsp.buf.code_action, mode = "n", desc = "code actions" },
+      { "K", vim.lsp.buf.hover, mode = "n", desc = "Hover" },
+    })
+  end,
+})
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup('lsp_attach_disable_ruff_hover', { clear = true }),
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client == nil then
+      return
+    end
+    if client.name == 'ruff' then
+      -- Disable hover in favor of Pyright
+      client.server_capabilities.hoverProvider = false
+    end
+  end,
+  desc = 'LSP: Disable hover capability from Ruff',
+})
+

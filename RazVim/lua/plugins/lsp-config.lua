@@ -27,10 +27,8 @@ return
         lspconfig.azure_pipelines_ls.setup({})
         lspconfig.dockerls.setup({})
         lspconfig.pyright.setup({})
+        lspconfig.ruff.setup({})
 
       end,
-      keys = {
-        { "K", vim.lsp.buf.hover, mode = "n", desc = "Hover" },
-      }
     }
   }

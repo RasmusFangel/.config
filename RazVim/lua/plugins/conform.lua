@@ -7,4 +7,8 @@ return {
       xhtml = { "prettier" },
     },
   },
+  keys = {
+    {"<leader>cf", function(args) require("conform").format({ bufnr=args.buf }) end, desc = "format", mode = "n"}
+  }
+
 }
