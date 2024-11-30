@@ -1,33 +1,36 @@
-return {
+return
   {
-    "williamboman/mason.nvim",
-    config = function()
-      require("mason").setup()
-    end
-  },
-  {
-    'williamboman/mason-lspconfig.nvim',
-    config = function()
-      require("mason-lspconfig").setup({
-        ensure_installed = {"lua_ls", "pyright", "ruff_lsp", "rust_analyzer"}
-      })
-    end
-  },
-  {
-    "neovim/nvim-lspconfig",
-    config = function()
-      local capabilities = require('cmp_nvim_lsp').default_capabilities()
+    {
+      "williamboman/mason.nvim",
+      opts = {},
+    },
+    {
+      "williamboman/mason-lspconfig.nvim",
+      opts = {
+        ensure_installed = {
+            "lua_ls",
+            "bashls",
+            "azure_pipelines_ls",
+            "dockerls",
+            "pyright",
+            "ruff",
+          }
+      },
+    },
+    {
+      "neovim/nvim-lspconfig",
+      config = function()
+        local lspconfig = require("lspconfig")
 
-      local lspconfig = require("lspconfig")
-      lspconfig.lua_ls.setup(capabilities)
-      lspconfig.pyright.setup(capabilities)
-      lspconfig.ruff_lsp.setup(capabilities)
-      lspconfig.rust_analyzer.setup(capabilities)
+        lspconfig.lua_ls.setup({})
+        lspconfig.bashls.setup({})
+        lspconfig.azure_pipelines_ls.setup({})
+        lspconfig.dockerls.setup({})
+        lspconfig.pyright.setup({})
 
-      vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
-      vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
-      vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
-      vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist)
-    end
+      end,
+      keys = {
+        { "K", vim.lsp.buf.hover, mode = "n", desc = "Hover" },
+      }
+    }
   }
-}

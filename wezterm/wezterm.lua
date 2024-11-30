@@ -8,9 +8,9 @@ config.color_scheme = "Catppuccin Mocha"
 -- config.color_scheme = 'Tokyo Night Moon'
 -- config.color_scheme = 'Everforest Dark (Medium)'
 config.hide_tab_bar_if_only_one_tab = true
-config.window_decorations = "RESIZE"
-config.window_background_opacity = 0.85
-config.macos_window_background_blur = 85
+-- config.window_decorations = "RESIZE"
+-- config.window_background_opacity = 0.85
+-- config.macos_window_background_blur = 85
 
 config.window_padding = {
 	left = 2,
