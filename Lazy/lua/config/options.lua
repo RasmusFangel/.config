@@ -7,10 +7,10 @@ vim.opt.scrolloff = 10 -- How much you see at top/bottom
 vim.cmd("let g:gitblame_message_when_not_committed = ''") -- git blame line
 
 -- Don't show virtual line
-vim.diagnostic.config({
-  virtual_text = false,
-  virtual_lines = { only_current_line = true },
-})
+-- vim.diagnostic.config({
+--   virtual_text = false,
+--   virtual_lines = { only_current_line = true },
+-- })
 
 -- Set the root by a .git file
 vim.g.root_spec = { ".git" }
