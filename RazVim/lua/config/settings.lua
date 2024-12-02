@@ -70,3 +70,9 @@ vim.cmd("let g:gitblame_message_when_not_committed = ''") -- git blame line
 
 -- Colorscheme
 vim.cmd.colorscheme "catppuccin"
+
+-- Diagnostics
+vim.diagnostic.config({
+  virtual_text = false,
+  -- virtual_lines = { only_current_line = true },
+})
