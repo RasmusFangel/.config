@@ -4,8 +4,8 @@ local config = {}
 config.font = wezterm.font("JetBrainsMono Nerd Font Mono", { stretch = "Expanded" })
 config.font_size = 14
 
-config.color_scheme = "Catppuccin Mocha"
--- config.color_scheme = 'Tokyo Night Moon'
+-- config.color_scheme = "Catppuccin Mocha"
+config.color_scheme = "Tokyo Night Moon"
 -- config.color_scheme = 'Everforest Dark (Medium)'
 config.hide_tab_bar_if_only_one_tab = true
 -- config.window_decorations = "RESIZE"
@@ -25,6 +25,5 @@ config.max_fps = 144
 config.animation_fps = 144
 
 config.default_cursor_style = "BlinkingBlock"
-
 
 return config
