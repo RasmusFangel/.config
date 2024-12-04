@@ -1,3 +1,15 @@
 -- Keymaps are automatically loaded on the VeryLazy event
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
+--
+-- local wk = require("which-key")
+--
+-- -- DAP keybinds
+-- wk.add({
+--   { "<F5>", require("dap").continue(), mode = "n" },
+--   { "<F6>", require("dap").step_over(), mode = "n" },
+--   { "<F7>", require("dap").step_into(), mode = "n" },
+--   { "<F8>", require("dap").step_out(), mode = "n" },
+--   { "<F9>", require("dap").restart(), mode = "n" },
+--   { "<F10>", require("dap").close(), mode = "n" },
+-- })
