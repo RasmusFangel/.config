@@ -19,19 +19,6 @@ local FILES_TO_LOOK_FOR = {
   },
 }
 
-local function refresh_lualine(env_info)
-  local ll_string = ""
-  if env_info.lang ~= "" then
-    ll_string = env_info.project .. " (" .. env_info.venv_dir .. ")"
-  else
-    ll_string = ""
-  end
-
-  vim.g.LL_VENV_STRING = ll_string
-
-  require("lualine").refresh()
-end
-
 local function get_venv_info()
   local buf_name = vim.api.nvim_buf_get_name(0)
   local file_ext = vim.fn.fnamemodify(buf_name, ":e")
@@ -84,7 +71,6 @@ local function refresh_lspconfig(env_info)
     on_attach = function(client, bufnr)
       -- DAP (Debug Adapter Protocol) Keybindings
       local dap = require("dap")
-
       -- Keymaps for debugging
       vim.keymap.set("n", "<F5>", dap.continue, { buffer = bufnr })
       vim.keymap.set("n", "<F6>", dap.step_over, { buffer = bufnr })
@@ -93,13 +79,26 @@ local function refresh_lspconfig(env_info)
       vim.keymap.set("n", "<F9>", dap.restart, { buffer = bufnr })
       vim.keymap.set("n", "<F10>", dap.close, { buffer = bufnr })
 
-      -- You can add other LSP-related keymaps here
-      -- For example:
-      vim.keymap.set("n", "gD", vim.lsp.buf.declaration, { buffer = bufnr })
-      vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr })
-      vim.keymap.set("n", "K", vim.lsp.buf.hover, { buffer = bufnr })
+      -- Setup Debug Conf
+      local debug_conf_abs = path.join(env_info.path, ".vscode", "launch.json")
+
+      local launchjs_check_mark = ""
+      -- Check if the file exists and is readable
+      if vim.fn.filereadable(debug_conf_abs) == 1 then
+        require("dap.ext.vscode").load_launchjs(debug_conf_abs)
+        launchjs_check_mark = "✓ "
+      end
+
+      -- Set Lualine
+      local ll_string = env_info.project .. " | " .. launchjs_check_mark .. env_info.venv_dir
+
+      vim.g.LL_VENV_STRING = ll_string
+
+      require("lualine").refresh()
     end,
   })
+
+  -- Load
 
   -- Manually restart LSP for the current buffer
   vim.cmd("LspRestart pyright")
@@ -131,7 +130,6 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
         vim.fn.setenv("PATH", new_path)
 
         refresh_lspconfig(env_info)
-        refresh_lualine(env_info)
 
         vim.cmd("cd " .. env_info.path)
       end
