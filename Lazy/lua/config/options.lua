@@ -14,3 +14,4 @@ vim.cmd("let g:gitblame_message_when_not_committed = ''") -- git blame line
 
 -- Set the root by a .git file
 vim.g.root_spec = { ".git" }
+vim.g.LL_VENV_STRING = ""

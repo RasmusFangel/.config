@@ -5,7 +5,7 @@ local FILES_TO_LOOK_FOR = {
   ["pyproject.toml"] = {
     lang = "python",
     venv_dir = ".venv",
-    icon = "",
+    icon = "",
   },
   ["package.json"] = {
     lang = "javascript",
@@ -41,7 +41,6 @@ local function get_venv_info()
 
     if project_file ~= "" then
       local result = vim.fn.fnamemodify(project_file, ":p:h")
-      -- require("notify")("Virtual Env Project Dir: " .. result)
 
       fileinfo.path = result
       fileinfo.extension = file_ext
@@ -60,59 +59,78 @@ local function get_venv_info()
   }
 end
 
--- Testing to see if we need this actually.
--- local function refresh_lspconfig(env_info)
---   local python_path_abs = env_info.path .. "/" .. env_info.venv_dir .. "/bin"
---   print(python_path_abs)
---   local lsp_config = require("lspconfig")
---   lsp_config.pyright.setup({
---     root_dir = env_info.path,
---     settings = {
---       pyright = {
---         -- Using Ruff's import organizer
---         disableOrganizeImports = true,
---       },
---       python = {
---         -- pythonPath = python_path_abs,
---         analysis = {
---           -- Ignore all files for analysis to exclusively use Ruff for linting
---           ignore = { "*" },
---         },
---       },
---     },
---   })
--- end
+local function refresh_lspconfig(env_info)
+  local lsp_config = require("lspconfig")
+  local python_path_abs = path.join(env_info.path, env_info.venv_dir, "bin", "python")
+
+  -- Detach existing Pyright client
+  for _, client in ipairs(vim.lsp.get_active_clients({ name = "pyright" })) do
+    client.stop()
+  end
+
+  -- Setup Pyright with the new configuration
+  lsp_config.pyright.setup({
+    cmd = { "pyright-langserver", "--stdio" },
+    root_dir = env_info.path,
+    settings = {
+      python = {
+        pythonPath = python_path_abs,
+        analysis = {
+          typeCheckingMode = "strict",
+          -- Additional Pyright configuration
+        },
+      },
+    },
+    on_attach = function(client, bufnr)
+      -- DAP (Debug Adapter Protocol) Keybindings
+      local dap = require("dap")
+
+      -- Keymaps for debugging
+      vim.keymap.set("n", "<F5>", dap.continue, { buffer = bufnr })
+      vim.keymap.set("n", "<F6>", dap.step_over, { buffer = bufnr })
+      vim.keymap.set("n", "<F7>", dap.step_into, { buffer = bufnr })
+      vim.keymap.set("n", "<F8>", dap.step_out, { buffer = bufnr })
+      vim.keymap.set("n", "<F9>", dap.restart, { buffer = bufnr })
+      vim.keymap.set("n", "<F10>", dap.close, { buffer = bufnr })
+
+      -- You can add other LSP-related keymaps here
+      -- For example:
+      vim.keymap.set("n", "gD", vim.lsp.buf.declaration, { buffer = bufnr })
+      vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr })
+      vim.keymap.set("n", "K", vim.lsp.buf.hover, { buffer = bufnr })
+    end,
+  })
+
+  -- Manually restart LSP for the current buffer
+  vim.cmd("LspRestart pyright")
+end
 
 local LAST_ACTIVATED_ENV = ""
+vim.g.LL_VENV_STRING = ""
 local start_path = vim.fn.getenv("PATH")
 
-vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter", "BufWinEnter" }, {
-  desc = "Load debug configs on VimEnter",
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
+  desc = "Dynamically update LSP and environment",
   pattern = "*",
-  once = false,
   callback = function()
     local env_info = get_venv_info()
 
     if env_info.lang ~= "" then
-      -- if we found env, check if venv has been built
-      local venv_abs = env_info.path .. "/" .. env_info.venv_dir
+      local venv_abs = path.join(env_info.path, env_info.venv_dir)
+
       if vim.fn.isdirectory(venv_abs) == 0 then
         print("No venv found! Please build.")
         return
       end
 
       if LAST_ACTIVATED_ENV ~= venv_abs then
-        print("Last Env: " .. LAST_ACTIVATED_ENV)
         LAST_ACTIVATED_ENV = venv_abs
-        -- vim.fn.setenv("VIRTUAL_ENV", venv_abs)
+        vim.fn.setenv("VIRTUAL_ENV", venv_abs)
 
         local new_path = path.join(venv_abs, "bin") .. ":" .. start_path
-        -- vim.fn.setenv("PATH", new_path) -- may not need
+        vim.fn.setenv("PATH", new_path)
 
-        -- refresh_lspconfig(env_info) -- may not need
-        local python_path_abs = env_info.path .. "/" .. env_info.venv_dir .. "/bin"
-        -- print(python_path_abs)
-        require("venv-selector").activate_from_path(python_path_abs)
+        refresh_lspconfig(env_info)
         refresh_lualine(env_info)
 
         vim.cmd("cd " .. env_info.path)
@@ -121,30 +139,4 @@ vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter", "BufWinEnter" }, {
   end,
 })
 
-vim.api.nvim_create_autocmd({ "LspAttach" }, {
-  desc = "Load Keybinds for DAP",
-  pattern = "*",
-  once = true,
-  callback = function()
-    local dap = require("dap")
-
-    vim.keymap.set("n", "<F5>", function()
-      dap.continue()
-    end)
-    vim.keymap.set("n", "<F6>", function()
-      dap.step_over()
-    end)
-    vim.keymap.set("n", "<F7>", function()
-      dap.step_into()
-    end)
-    vim.keymap.set("n", "<F8>", function()
-      dap.step_out()
-    end)
-    vim.keymap.set("n", "<F9>", function()
-      dap.restart()
-    end)
-    vim.keymap.set("n", "<F10>", function()
-      dap.close()
-    end)
-  end,
-})
+-- Rest of your configuration remains the same...
